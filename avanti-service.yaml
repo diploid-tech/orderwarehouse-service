@@ -1,0 +1,36 @@
+main:
+  namespace: services
+  name: orderwarehouse-service
+  description: |
+    A example service for processing orders and send them to warehouses.
+    This service reacts to incoming OrderCreated events and then retrieves order and product data.
+    Splits the order into seperate warehouse orders and sends them.
+  integration: none
+  deploymentType: Service
+  buildType: netcore
+  httpPort: 5000
+  clusterPort: 2552
+  team: platform
+  authorization:
+    requiredClaims:
+      azp: applications
+      aud: account
+    mappings:
+      x-avanti-customerId: context.customerId
+      x-avanti-email: email
+environments:
+  staging:
+    replicaCount: 1
+    cpuLimit: 75m
+    memoryLimit: 128Mi
+    vars:
+      AkkaSettings__AkkaClusterDiscoveryResolver: Kubernetes
+      AkkaSettings__MinNumberOfNodesInCluster: 1
+      AuthenticationSettings__BasicAuthenticationPassword: hksdflkjsaflkdkdljflaksdkl
+      Serilog__MinimumLevel__Default: Information
+      RelationalDataStoreSettings__DatabaseName: order-reporting
+      ProcessorSettings__DelayProcessingOnStartInSeconds: 10
+      ServiceSettings__OrderServiceUri: http://order-service:5000
+      ServiceSettings__ProductServiceUri: http://product-service:5000
+      ServiceSettings__WarehouseServiceUris__1: http://warehouse-one-printer-service:5000
+      ServiceSettings__WarehouseServiceUris__2: http://warehouse-two-printer-service:5000

@@ -1,0 +1,31 @@
+trigger:
+  - master
+
+name: $(Date:yyyyMMdd)$(Rev:.r)
+variables:
+  - group: build-settings
+  - name: system.debug
+    value: false
+  - name: pool
+    value: Avanti
+  - name: tenantName
+    value: demoenv8
+  - name: templateName
+    value: blueprint-service-netcore-template
+
+stages:
+  - stage: tenant
+    jobs:
+      - job: publish_template
+        displayName: "Publish this template"
+        pool: ${{variables.pool}}
+        steps:
+          - checkout: self
+            persistCredentials: true
+            path: ${{variables.templateName}}
+          - script: |
+              az login --identity
+              ACCOUNT_NAME=$(az keyvault secret show --name storage-account --vault-name avanti-${{variables.tenantName}} --query value --output tsv)
+              az storage blob delete-batch --account-name $ACCOUNT_NAME --source service-templates --pattern ${{variables.templateName}}/*
+              az storage copy --source . --destination-account-name $ACCOUNT_NAME --destination-container service-templates --recursive
+            displayName: Copy template to Azure Storage Account

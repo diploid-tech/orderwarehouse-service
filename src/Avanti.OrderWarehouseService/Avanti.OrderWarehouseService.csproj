@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <DebugType>full</DebugType>
+    <AssemblyName>Avanti.OrderWarehouseService</AssemblyName>
+    <PackageId>ProcessingService</PackageId>
+    <CodeAnalysisRuleSet>../../AnalysisRules.ruleset</CodeAnalysisRuleSet>
+    <RootNamespace>Avanti.OrderWarehouseService</RootNamespace>
+    <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+    <TreatSpecificWarningsAsErrors />
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <AdditionalFiles Include="../../stylecop.json" />
+    <EmbeddedResource Include="**\*.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="avanti-service.yaml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avanti.Core.EventStream.Azure" Version="1.0.3-beta-g22df1f2b7b" />
+    <PackageReference Include="Avanti.Core.KeyStore.Azure" Version="1.0.0-beta-g38c5ea12f6" />
+    <PackageReference Include="Avanti.Core.Microservice" Version="1.1.0-beta-ga528ea29f7" />
+    <PackageReference Include="Avanti.Core.Http" Version="1.0.0-beta-g7345bd861c" />
+    <PackageReference Include="Avanti.Core.RelationalData.PostgreSQL" Version="1.0.1-beta-g6589e419a4" />
+  </ItemGroup>
+</Project>
