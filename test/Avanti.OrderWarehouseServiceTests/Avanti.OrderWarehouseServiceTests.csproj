@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <DebugType>portable</DebugType>
     <AssemblyName>Avanti.OrderWarehouseServiceTests</AssemblyName>
     <PackageId>Avanti.Tests</PackageId>
@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avanti.Core.Unittests" Version="1.0.0-beta-g81eacf1e29" />
+    <PackageReference Include="Avanti.Core.Unittests" Version="1.1.0-g93708b84bc" />
     <PackageReference Include="coverlet.msbuild" Version="2.8.1" IncludeAssets="all" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1" />
   </ItemGroup>

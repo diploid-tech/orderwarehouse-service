@@ -7,7 +7,7 @@ This service is an example of processing incoming events and a high performant n
 ## Prerequisites
 
 - Windows / Linux / MacOS
-- ASP.NET Core 3.1 Runtime
+- .NET 5 Runtime
 - PostgreSQL 12 or higher
 
 ## Installation

@@ -121,7 +121,7 @@ namespace Avanti.OrderWarehouseService.WarehouseOrder
 
         private void ReceiveWarehouseResponseState()
         {
-            Dictionary<int, Result?> validations = this.warehouseOrders.ToDictionary(o => o.WarehouseId, _ => default(Result));
+            Dictionary<int, Result?> validations = this.warehouseOrders!.ToDictionary(o => o.WarehouseId, _ => default(Result));
 
             void CheckAllValidations()
             {

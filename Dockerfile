@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine
+FROM mcr.microsoft.com/dotnet/aspnet:5.0-alpine
 RUN apk update && apk add --no-cache curl
 COPY output/ /root/
 ENV ASPNETCORE_URLS http://*:5000
