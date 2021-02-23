@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace Avanti.OrderWarehouseService.WarehouseOrder.Models
 {
     public class Product

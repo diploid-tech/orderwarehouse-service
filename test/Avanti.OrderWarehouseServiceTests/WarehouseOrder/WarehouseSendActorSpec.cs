@@ -13,11 +13,12 @@ namespace Avanti.OrderWarehouseServiceTests.WarehouseOrder
 {
     public partial class WarehouseSendActorSpec : WithSubject<IActorRef>
     {
-        private ProgrammableActor<HttpRequestActor> progHttpRequestActor;
-        private TestProbe parentTestProbe;
-        private ServiceSettings settings = new ServiceSettings
+        private readonly ProgrammableActor<HttpRequestActor> progHttpRequestActor;
+        private readonly TestProbe parentTestProbe;
+        private readonly ServiceSettings settings = new()
         {
-            WarehouseServiceUris = {
+            WarehouseServiceUris =
+            {
                 { "1", new Uri("http://warehouse-one-service:5000") },
                 { "2", new Uri("http://warehouse-two-service:5000") }
             }
@@ -25,12 +26,12 @@ namespace Avanti.OrderWarehouseServiceTests.WarehouseOrder
 
         private WarehouseSendActorSpec()
         {
-            this.progHttpRequestActor = Kit.CreateProgrammableActor<HttpRequestActor>("http-request-actor");
-            var httpRequestActorProvider = An<IActorProvider<HttpRequestActor>>();
-            httpRequestActorProvider.Get().Returns(this.progHttpRequestActor.TestProbe);
+            progHttpRequestActor = Kit.CreateProgrammableActor<HttpRequestActor>("http-request-actor");
+            IActorProvider<HttpRequestActor> httpRequestActorProvider = An<IActorProvider<HttpRequestActor>>();
+            httpRequestActorProvider.Get().Returns(progHttpRequestActor.TestProbe);
 
-            var options = An<IOptions<ServiceSettings>>();
-            options.Value.Returns(this.settings);
+            IOptions<ServiceSettings> options = An<IOptions<ServiceSettings>>();
+            options.Value.Returns(settings);
 
             parentTestProbe = Kit.CreateTestProbe("parent-actor");
 
@@ -43,7 +44,7 @@ namespace Avanti.OrderWarehouseServiceTests.WarehouseOrder
 
         public class ActorUnderTest : WarehouseSendActor
         {
-            private TestProbe parentTestProbe;
+            private readonly TestProbe parentTestProbe;
 
             public ActorUnderTest(
                 IActorProvider<HttpRequestActor> httpRequestActorProvider,
@@ -54,7 +55,7 @@ namespace Avanti.OrderWarehouseServiceTests.WarehouseOrder
                 this.parentTestProbe = parentTestProbe;
             }
 
-            protected override IActorRef Parent { get => this.parentTestProbe; }
+            protected override IActorRef Parent => parentTestProbe;
         }
     }
 }

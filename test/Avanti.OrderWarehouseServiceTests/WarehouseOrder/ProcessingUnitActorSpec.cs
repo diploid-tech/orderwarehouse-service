@@ -15,9 +15,9 @@ namespace Avanti.OrderWarehouseServiceTests.WarehouseOrder
 {
     public partial class ProcessingUnitActorSpec : WithSubject<IActorRef>
     {
-        private ProgrammableActor<HttpRequestActor> progHttpRequestActor;
-        private ProgrammableActor<WarehouseSendActor> progWarehouseSendActor;
-        private ServiceSettings settings = new ServiceSettings
+        private readonly ProgrammableActor<HttpRequestActor> progHttpRequestActor;
+        private readonly ProgrammableActor<WarehouseSendActor> progWarehouseSendActor;
+        private readonly ServiceSettings settings = new()
         {
             OrderServiceUri = new Uri("http://order-service:5000"),
             ProductServiceUri = new Uri("http://product-service:5000")
@@ -25,14 +25,14 @@ namespace Avanti.OrderWarehouseServiceTests.WarehouseOrder
 
         private ProcessingUnitActorSpec()
         {
-            this.progHttpRequestActor = Kit.CreateProgrammableActor<HttpRequestActor>("http-request-actor");
-            var httpRequestActorProvider = An<IActorProvider<HttpRequestActor>>();
-            httpRequestActorProvider.Get().Returns(this.progHttpRequestActor.TestProbe);
+            progHttpRequestActor = Kit.CreateProgrammableActor<HttpRequestActor>("http-request-actor");
+            IActorProvider<HttpRequestActor> httpRequestActorProvider = An<IActorProvider<HttpRequestActor>>();
+            httpRequestActorProvider.Get().Returns(progHttpRequestActor.TestProbe);
 
-            this.progWarehouseSendActor = Kit.CreateProgrammableActor<WarehouseSendActor>("warehouse-send-actor");
+            progWarehouseSendActor = Kit.CreateProgrammableActor<WarehouseSendActor>("warehouse-send-actor");
 
-            var options = An<IOptions<ServiceSettings>>();
-            options.Value.Returns(this.settings);
+            IOptions<ServiceSettings> options = An<IOptions<ServiceSettings>>();
+            options.Value.Returns(settings);
 
             var config = new MapperConfiguration(cfg => cfg.AddProfile(new WarehouseOrderMapping()));
             config.AssertConfigurationIsValid();
@@ -42,12 +42,12 @@ namespace Avanti.OrderWarehouseServiceTests.WarehouseOrder
                     httpRequestActorProvider,
                     options,
                     config.CreateMapper(),
-                    this.progWarehouseSendActor.TestProbe));
+                    progWarehouseSendActor.TestProbe));
         }
 
         public class ActorUnderTest : ProcessingUnitActor
         {
-            private TestProbe warehouseTestProbe;
+            private readonly TestProbe warehouseTestProbe;
 
             public ActorUnderTest(
                 IActorProvider<HttpRequestActor> httpRequestActorProvider,
@@ -59,7 +59,7 @@ namespace Avanti.OrderWarehouseServiceTests.WarehouseOrder
                 this.warehouseTestProbe = warehouseTestProbe;
             }
 
-            protected override IActorRef CreateWarehouseSendActorRef(string actorName) => this.warehouseTestProbe;
+            protected override IActorRef CreateWarehouseSendActorRef(string actorName) => warehouseTestProbe;
         }
     }
 }

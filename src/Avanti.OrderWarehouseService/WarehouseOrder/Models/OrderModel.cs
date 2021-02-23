@@ -3,10 +3,9 @@ using System.Collections.Generic;
 
 namespace Avanti.OrderWarehouseService.WarehouseOrder.Models
 {
-    public class Order
+    public class OrderModel
     {
         public int Id { get; set; }
-
         public DateTimeOffset OrderDate { get; set; }
         public IEnumerable<OrderLine> Lines { get; set; } = Array.Empty<OrderLine>();
 

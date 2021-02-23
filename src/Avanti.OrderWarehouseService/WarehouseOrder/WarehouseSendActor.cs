@@ -2,7 +2,6 @@ using System.Globalization;
 using Akka.Actor;
 using Akka.Event;
 using Akka.Logger.Serilog;
-using AutoMapper;
 using Avanti.Core.Http;
 using Avanti.Core.Microservice.Actors;
 using Microsoft.Extensions.Options;
@@ -23,13 +22,13 @@ namespace Avanti.OrderWarehouseService.WarehouseOrder
             this.httpRequestActor = httpRequestActorProvider.Get();
             this.serviceSettings = serviceSettings.Value;
 
-            Receive<Models.WarehouseOrder>(Handle);
+            Receive<Models.WarehouseOrderModel>(Handle);
         }
 
-        private void Handle(Models.WarehouseOrder m)
+        private void Handle(Models.WarehouseOrderModel m)
         {
             this.warehouseId = m.WarehouseId;
-            if (serviceSettings.WarehouseServiceUris.TryGetValue(this.warehouseId.ToString(CultureInfo.InvariantCulture), out var warehouseServiceUri))
+            if (this.serviceSettings.WarehouseServiceUris.TryGetValue(this.warehouseId.ToString(CultureInfo.InvariantCulture), out System.Uri? warehouseServiceUri))
             {
                 Become(ReceiveResponseState);
                 this.httpRequestActor.Tell(
@@ -43,7 +42,7 @@ namespace Avanti.OrderWarehouseService.WarehouseOrder
             else
             {
                 this.logger.Error($"Uri location of warehouse {this.warehouseId} is not known!");
-                Parent.Tell(new OrderIsNotSent { WarehouseId = this.warehouseId });
+                this.Parent.Tell(new OrderIsNotSent { WarehouseId = this.warehouseId });
                 Context.Stop(Context.Self);
             }
         }
@@ -52,22 +51,22 @@ namespace Avanti.OrderWarehouseService.WarehouseOrder
         {
             Receive<HttpRequestActor.ReceivedSuccessServiceResponse>(r =>
             {
-                Parent.Tell(new OrderIsSent { WarehouseId = this.warehouseId });
+                this.Parent.Tell(new OrderIsSent { WarehouseId = this.warehouseId });
                 Context.Stop(Context.Self);
             });
             Receive<HttpRequestActor.ReceivedNonSuccessServiceResponse>(r =>
             {
                 this.logger.Error($"Unexpected response from warehouse-service {this.warehouseId}: {r.StatusCode}");
-                Parent.Tell(new OrderIsNotSent { WarehouseId = this.warehouseId });
+                this.Parent.Tell(new OrderIsNotSent { WarehouseId = this.warehouseId });
                 Context.Stop(Context.Self);
             });
             ReceiveAny(_ =>
             {
-                Parent.Tell(new OrderIsNotSent { WarehouseId = this.warehouseId });
+                this.Parent.Tell(new OrderIsNotSent { WarehouseId = this.warehouseId });
                 Context.Stop(Context.Self);
             });
         }
 
-        protected virtual IActorRef Parent { get => Context.Parent; }
+        protected virtual IActorRef Parent => Context.Parent;
     }
 }

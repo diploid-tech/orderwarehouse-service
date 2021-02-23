@@ -5,15 +5,17 @@
     <AssemblyName>Avanti.OrderWarehouseServiceTests</AssemblyName>
     <PackageId>Avanti.Tests</PackageId>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
-    <CodeAnalysisRuleSet>../../AnalysisRulesForTests.ruleset</CodeAnalysisRuleSet>
     <RootNamespace>Avanti.OrderWarehouseServiceTests</RootNamespace>
     <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     <TreatSpecificWarningsAsErrors />
+    <NoWarn>$(NoWarn);CA1014</NoWarn>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="../../src/Avanti.OrderWarehouseService/Avanti.OrderWarehouseService.csproj" />
-    <AdditionalFiles Include="../../stylecop.json" />
   </ItemGroup>
 
   <ItemGroup>

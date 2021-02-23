@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Akka.Actor;
-using Akka.DI.Core;
 using Akka.Event;
 using Akka.Logger.Serilog;
 using AutoMapper;
 using Avanti.Core.Http;
 using Avanti.Core.Microservice;
 using Avanti.Core.Microservice.Actors;
+using Avanti.Core.Microservice.AkkaSupport;
 using Avanti.OrderWarehouseService.Order;
 using Microsoft.Extensions.Options;
 using Failure = Avanti.Core.Microservice.Failure;
@@ -20,11 +20,11 @@ namespace Avanti.OrderWarehouseService.WarehouseOrder
         private readonly ILoggingAdapter logger = Context.GetLogger<SerilogLoggingAdapter>();
         private readonly IActorRef httpRequestActor;
         private readonly ServiceSettings serviceSettings;
+        private readonly IMapper mapper;
         private IActorRef? initiatorActorRef;
-        private IMapper mapper;
         private int? orderId;
-        private Models.Order? order;
-        private IEnumerable<Models.WarehouseOrder>? warehouseOrders;
+        private Models.OrderModel? order;
+        private IEnumerable<Models.WarehouseOrderModel>? warehouseOrders;
 
         public ProcessingUnitActor(
             IActorProvider<HttpRequestActor> httpRequestActorProvider,
@@ -47,7 +47,7 @@ namespace Avanti.OrderWarehouseService.WarehouseOrder
             this.orderId = m.OrderId;
 
             Become(ReceiveOrderDetailsState);
-            var orderServiceUri = this.serviceSettings.OrderServiceUri ?? new Uri("http://unknown/");
+            Uri? orderServiceUri = this.serviceSettings.OrderServiceUri ?? new Uri("http://unknown/");
             this.httpRequestActor.Tell(
                 new HttpRequestActor.Get
                 {
@@ -58,11 +58,11 @@ namespace Avanti.OrderWarehouseService.WarehouseOrder
 
         private void ReceiveOrderDetailsState()
         {
-            this.logger.Debug($"Wait for retrieving order details of {orderId}");
+            this.logger.Debug($"Wait for retrieving order details of {this.orderId}");
             Receive<HttpRequestActor.ReceivedSuccessServiceResponse>(r =>
             {
-                this.order = r.ResponseToObjectOf<Models.Order>();
-                var productServiceUri = this.serviceSettings.ProductServiceUri ?? new Uri("http://unknown/");
+                this.order = r.ResponseToObjectOf<Models.OrderModel>();
+                Uri? productServiceUri = this.serviceSettings.ProductServiceUri ?? new Uri("http://unknown/");
                 Become(ReceiveProductDetailsState);
                 this.httpRequestActor.Tell(
                     new HttpRequestActor.Post
@@ -87,27 +87,27 @@ namespace Avanti.OrderWarehouseService.WarehouseOrder
         {
             Receive<HttpRequestActor.ReceivedSuccessServiceResponse>(r =>
             {
-                var data = r.ResponseToString();
-                var products = r.ResponseToObjectOf<IEnumerable<Models.Product>>();
-                order!.Lines = order.Lines.Select(l =>
+                string? data = r.ResponseToString();
+                IEnumerable<Models.Product>? products = r.ResponseToObjectOf<IEnumerable<Models.Product>>();
+                this.order!.Lines = this.order.Lines.Select(l =>
                 {
                     l.Product = products.FirstOrDefault(p => p.Id == l.ProductId);
                     return l;
                 });
 
-                if (order.Lines.Any(l => l.Product == null))
+                if (this.order.Lines.Any(l => l.Product == null))
                 {
-                    this.logger.Warning($"Order has invalid products on line(s): {string.Join(", ", order.Lines.Where(l => l.Product == null).Select(l => l.Line))}");
+                    this.logger.Warning($"Order has invalid products on line(s): {string.Join(", ", this.order.Lines.Where(l => l.Product == null).Select(l => l.Line))}");
                     TellFailureAndKillSelf();
                 }
 
-                this.warehouseOrders = this.mapper.Map<IEnumerable<Models.WarehouseOrder>>(
-                    order.Lines.GroupBy(o => o.Product!.WarehouseId).Select(g => (order, g)));
+                this.warehouseOrders = this.mapper.Map<IEnumerable<Models.WarehouseOrderModel>>(
+                    this.order.Lines.GroupBy(o => o.Product!.WarehouseId).Select(g => (this.order, g)));
 
                 Become(ReceiveWarehouseResponseState);
-                foreach (var warehouseOrder in warehouseOrders)
+                foreach (Models.WarehouseOrderModel? warehouseOrder in this.warehouseOrders)
                 {
-                    var actor = CreateWarehouseSendActorRef($"warehouse-{warehouseOrder.WarehouseId}");
+                    IActorRef? actor = CreateWarehouseSendActorRef($"warehouse-{warehouseOrder.WarehouseId}");
                     actor.Tell(warehouseOrder);
                 }
             });
@@ -121,7 +121,7 @@ namespace Avanti.OrderWarehouseService.WarehouseOrder
 
         private void ReceiveWarehouseResponseState()
         {
-            Dictionary<int, Result?> validations = this.warehouseOrders!.ToDictionary(o => o.WarehouseId, _ => default(Result));
+            var validations = this.warehouseOrders!.ToDictionary(o => o.WarehouseId, _ => default(Result));
 
             void CheckAllValidations()
             {
@@ -130,17 +130,17 @@ namespace Avanti.OrderWarehouseService.WarehouseOrder
                     // TODO: should same the warehouse order and it's status
                     if (validations.Values.All(v => v is IsSuccess))
                     {
-                        this.logger.Info($"Order {orderId} is processed");
+                        this.logger.Info($"Order {this.orderId} is processed");
                         this.initiatorActorRef.Tell(new ProcessingCoordinatorActor.OrderIsProcessed());
                     }
                     else if (validations.Values.All(v => v is IsFailure))
                     {
-                        this.logger.Warning($"Order {orderId} partially processed");
+                        this.logger.Warning($"Order {this.orderId} partially processed");
                         this.initiatorActorRef.Tell(new ProcessingCoordinatorActor.OrderFailedToProcess());
                     }
                     else
                     {
-                        this.logger.Error($"Order {orderId} failed to process");
+                        this.logger.Error($"Order {this.orderId} failed to process");
                         this.initiatorActorRef.Tell(new ProcessingCoordinatorActor.OrderIsPartiallyProcessed());
                     }
 
@@ -161,7 +161,7 @@ namespace Avanti.OrderWarehouseService.WarehouseOrder
         }
 
         protected virtual IActorRef CreateWarehouseSendActorRef(string actorName) =>
-            Context.ActorOf(Context.DI().Props<WarehouseSendActor>(), actorName);
+            Context.ActorOfWithDI<WarehouseSendActor>(actorName);
 
         private void TellFailureAndKillSelf()
         {

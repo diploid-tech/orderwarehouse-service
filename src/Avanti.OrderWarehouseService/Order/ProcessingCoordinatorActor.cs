@@ -1,10 +1,9 @@
-using System.Text.Json.Serialization;
 using Akka.Actor;
-using Akka.DI.Core;
 using Akka.Event;
 using Akka.Logger.Serilog;
 using AutoMapper;
 using Avanti.Core.EventStream;
+using Avanti.Core.Microservice.AkkaSupport;
 using Avanti.OrderWarehouseService.WarehouseOrder;
 
 namespace Avanti.OrderWarehouseService.Order
@@ -23,16 +22,16 @@ namespace Avanti.OrderWarehouseService.Order
 
         private void Handle(ProcessOrder m)
         {
-            var actorName = $"order-{m.OrderId}";
+            string? actorName = $"order-{m.OrderId}";
             if (!ChildExists(actorName))
             {
-                var actor = CreateProcessingUnitActor(actorName);
+                IActorRef? actor = CreateProcessingUnitActor(actorName);
                 actor.Forward(this.mapper.Map<ProcessingUnitActor.StartProcessing>(m));
             }
             else
             {
                 this.logger.Warning($"Already processing this order with id {m.OrderId}");
-                Sender.Tell(new OrderIsDuplicate());
+                this.Sender.Tell(new OrderIsDuplicate());
             }
         }
 
@@ -40,11 +39,9 @@ namespace Avanti.OrderWarehouseService.Order
             !Context.Child(actorName).IsNobody();
 
         protected virtual IActorRef CreateProcessingUnitActor(string actorName) =>
-            Context.ActorOf(Context.DI().Props<ProcessingUnitActor>(), actorName);
+            Context.ActorOfWithDI<ProcessingUnitActor>(actorName);
 
-        protected override void PreStart()
-        {
+        protected override void PreStart() =>
             Context.CreateEventWorkerActor<Events.OrderInserted>("ordercreated-event-processing-actor");
-        }
     }
 }

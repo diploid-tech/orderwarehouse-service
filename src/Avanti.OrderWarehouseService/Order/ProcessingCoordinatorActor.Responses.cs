@@ -1,5 +1,3 @@
-using Akka.Actor;
-
 namespace Avanti.OrderWarehouseService.Order
 {
     public partial class ProcessingCoordinatorActor

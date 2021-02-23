@@ -1,4 +1,3 @@
-using System;
 using Akka.Actor;
 using Akka.TestKit;
 using AutoMapper;
@@ -11,22 +10,22 @@ namespace Avanti.OrderWarehouseServiceTests.Order
 {
     public partial class ProcessingCoordinatorActorSpec : WithSubject<IActorRef>
     {
-        private ProgrammableActor<ProcessingUnitActor> progProcessingUnitActor;
+        private readonly ProgrammableActor<ProcessingUnitActor> progProcessingUnitActor;
+
         private ProcessingCoordinatorActorSpec()
         {
-            this.progProcessingUnitActor = Kit.CreateProgrammableActor<ProcessingUnitActor>("processing-unit-actor");
+            progProcessingUnitActor = Kit.CreateProgrammableActor<ProcessingUnitActor>("processing-unit-actor");
 
             var config = new MapperConfiguration(cfg => cfg.AddProfile(new OrderMapping()));
             config.AssertConfigurationIsValid();
 
-            Subject = this.ActorOfAsTestActorRef<ActorUnderTest>(
-                Props.Create<ActorUnderTest>(config.CreateMapper(), this.progProcessingUnitActor.TestProbe));
+            Subject = ActorOfAsTestActorRef<ActorUnderTest>(
+                Props.Create<ActorUnderTest>(config.CreateMapper(), progProcessingUnitActor.TestProbe));
         }
 
         public class ActorUnderTest : ProcessingCoordinatorActor
         {
-            private TestProbe processingUnitTestProbe;
-            public bool HasExistingOrder { get; set; }
+            private readonly TestProbe processingUnitTestProbe;
 
             public ActorUnderTest(IMapper mapper, TestProbe processingUnitTestProbe)
                 : base(mapper)
@@ -34,11 +33,15 @@ namespace Avanti.OrderWarehouseServiceTests.Order
                 this.processingUnitTestProbe = processingUnitTestProbe;
             }
 
-            protected override bool ChildExists(string actorName) => this.HasExistingOrder;
+            public bool HasExistingOrder { get; set; }
 
-            protected override IActorRef CreateProcessingUnitActor(string actorName) => this.processingUnitTestProbe;
+            protected override bool ChildExists(string actorName) => HasExistingOrder;
 
-            protected override void PreStart() { }
+            protected override IActorRef CreateProcessingUnitActor(string actorName) => processingUnitTestProbe;
+
+            protected override void PreStart()
+            {
+            }
         }
     }
 }

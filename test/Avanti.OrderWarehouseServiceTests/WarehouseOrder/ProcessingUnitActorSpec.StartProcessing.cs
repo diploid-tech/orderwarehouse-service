@@ -17,23 +17,29 @@ namespace Avanti.OrderWarehouseServiceTests.WarehouseOrder
     {
         public class When_Start_Processing : ProcessingUnitActorSpec
         {
+            private readonly ProcessingUnitActor.StartProcessing message = new()
+            {
+                OrderId = 5,
+                OrderDate = DateTimeOffset.Parse("2020-07-01T19:00:00Z", CultureInfo.InvariantCulture)
+            };
+
             public When_Start_Processing()
             {
-                this.progHttpRequestActor.SetResponseForRequest<HttpRequestActor.Get>(_ =>
+                progHttpRequestActor.SetResponseForRequest<HttpRequestActor.Get>(_ =>
                     new HttpRequestActor.ReceivedSuccessServiceResponse(
                         HttpStatusCode.OK,
-                        Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new Models.Order
+                        Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new Models.OrderModel
                         {
                             Id = 5,
                             OrderDate = DateTimeOffset.Parse("2020-07-01T19:00:00Z", CultureInfo.InvariantCulture),
                             Lines = new[]
                             {
-                                new Models.Order.OrderLine { Line = 1, ProductId = 5, Amount = 5 },
-                                new Models.Order.OrderLine { Line = 2, ProductId = 10, Amount = 2 }
+                                new Models.OrderModel.OrderLine { Line = 1, ProductId = 5, Amount = 5 },
+                                new Models.OrderModel.OrderLine { Line = 2, ProductId = 10, Amount = 2 }
                             }
                         }))));
 
-                this.progHttpRequestActor.SetResponseForRequest<HttpRequestActor.Post>(_ =>
+                progHttpRequestActor.SetResponseForRequest<HttpRequestActor.Post>(_ =>
                     new HttpRequestActor.ReceivedSuccessServiceResponse(
                         HttpStatusCode.OK,
                         Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new[]
@@ -42,7 +48,7 @@ namespace Avanti.OrderWarehouseServiceTests.WarehouseOrder
                             new Models.Product { Id = 10, Description = "product 2", Price = 7500, WarehouseId = 2 },
                         }))));
 
-                this.progWarehouseSendActor.SetResponseForRequest<Models.WarehouseOrder>(m => new WarehouseSendActor.OrderIsSent { WarehouseId = m.WarehouseId });
+                progWarehouseSendActor.SetResponseForRequest<Models.WarehouseOrderModel>(m => new WarehouseSendActor.OrderIsSent { WarehouseId = m.WarehouseId });
             }
 
             [Fact]
@@ -54,14 +60,14 @@ namespace Avanti.OrderWarehouseServiceTests.WarehouseOrder
                 // Assert
                 Kit.ExpectMsg<ProcessingCoordinatorActor.OrderIsProcessed>();
 
-                this.progHttpRequestActor.GetRequest<HttpRequestActor.Get>().Should().BeEquivalentTo(
+                progHttpRequestActor.GetRequest<HttpRequestActor.Get>().Should().BeEquivalentTo(
                     new HttpRequestActor.Get
                     {
                         ServiceUrl = "http://order-service:5000",
                         Path = "/private/order/5"
                     });
 
-                this.progHttpRequestActor.GetRequest<HttpRequestActor.Post>().Should().BeEquivalentTo(
+                progHttpRequestActor.GetRequest<HttpRequestActor.Post>().Should().BeEquivalentTo(
                     new HttpRequestActor.Post
                     {
                         ServiceUrl = "http://product-service:5000",
@@ -72,10 +78,10 @@ namespace Avanti.OrderWarehouseServiceTests.WarehouseOrder
                         }
                     });
 
-                this.progWarehouseSendActor.GetRequests<Models.WarehouseOrder>().Should().BeEquivalentTo(
+                progWarehouseSendActor.GetRequests<Models.WarehouseOrderModel>().Should().BeEquivalentTo(
                     new[]
                     {
-                        new Models.WarehouseOrder
+                        new Models.WarehouseOrderModel
                         {
                             Id = "5-1",
                             OrderId = 5,
@@ -83,10 +89,10 @@ namespace Avanti.OrderWarehouseServiceTests.WarehouseOrder
                             OrderDate = DateTimeOffset.Parse("2020-07-01T19:00:00Z", CultureInfo.InvariantCulture),
                             Lines = new[]
                             {
-                                new Models.WarehouseOrder.OrderLine { Line = 1, ProductId = 5, Description = "product 1", Amount = 5 }
+                                new Models.WarehouseOrderModel.OrderLine { Line = 1, ProductId = 5, Description = "product 1", Amount = 5 }
                             }
                         },
-                        new Models.WarehouseOrder
+                        new Models.WarehouseOrderModel
                         {
                             Id = "5-2",
                             OrderId = 5,
@@ -94,7 +100,7 @@ namespace Avanti.OrderWarehouseServiceTests.WarehouseOrder
                             OrderDate = DateTimeOffset.Parse("2020-07-01T19:00:00Z", CultureInfo.InvariantCulture),
                             Lines = new[]
                             {
-                                new Models.WarehouseOrder.OrderLine { Line = 2, ProductId = 10, Description = "product 2", Amount = 2 }
+                                new Models.WarehouseOrderModel.OrderLine { Line = 2, ProductId = 10, Description = "product 2", Amount = 2 }
                             }
                         }
                     });
@@ -104,7 +110,7 @@ namespace Avanti.OrderWarehouseServiceTests.WarehouseOrder
             public void Should_Return_Order_Processing_Failed_When_Order_Service_Returns_Non_OK()
             {
                 // Arrange
-                this.progHttpRequestActor.SetResponseForRequest<HttpRequestActor.Get>(_ =>
+                progHttpRequestActor.SetResponseForRequest<HttpRequestActor.Get>(_ =>
                     new HttpRequestActor.ReceivedNonSuccessServiceResponse(HttpStatusCode.BadGateway, Array.Empty<byte>()));
 
                 // Act
@@ -118,7 +124,7 @@ namespace Avanti.OrderWarehouseServiceTests.WarehouseOrder
             public void Should_Return_Order_Processing_Failed_When_Order_Service_Communication_Failure()
             {
                 // Arrange
-                this.progHttpRequestActor.SetResponseForRequest<HttpRequestActor.Get>(_ =>
+                progHttpRequestActor.SetResponseForRequest<HttpRequestActor.Get>(_ =>
                     new HttpRequestActor.ServiceRequestFailed(HttpRequestActor.ServiceRequestFailed.FailureReason.ServiceRequestTimeout));
 
                 // Act
@@ -132,7 +138,7 @@ namespace Avanti.OrderWarehouseServiceTests.WarehouseOrder
             public void Should_Return_Order_Processing_Failed_When_Product_Service_Returns_Non_OK()
             {
                 // Arrange
-                this.progHttpRequestActor.SetResponseForRequest<HttpRequestActor.Post>(_ =>
+                progHttpRequestActor.SetResponseForRequest<HttpRequestActor.Post>(_ =>
                     new HttpRequestActor.ReceivedNonSuccessServiceResponse(HttpStatusCode.BadGateway, Array.Empty<byte>()));
 
                 // Act
@@ -146,7 +152,7 @@ namespace Avanti.OrderWarehouseServiceTests.WarehouseOrder
             public void Should_Return_Order_Processing_Failed_When_Product_Service_Communication_Failure()
             {
                 // Arrange
-                this.progHttpRequestActor.SetResponseForRequest<HttpRequestActor.Post>(_ =>
+                progHttpRequestActor.SetResponseForRequest<HttpRequestActor.Post>(_ =>
                     new HttpRequestActor.ServiceRequestFailed(HttpRequestActor.ServiceRequestFailed.FailureReason.ServiceRequestTimeout));
 
                 // Act
@@ -160,10 +166,10 @@ namespace Avanti.OrderWarehouseServiceTests.WarehouseOrder
             public void Should_Return_Order_Processing_Failed_When_One_Warehouse_Order_Is_Not_Sent()
             {
                 // Arrange
-                this.progWarehouseSendActor.SetResponseForRequest<Models.WarehouseOrder>(m =>
+                progWarehouseSendActor.SetResponseForRequest<Models.WarehouseOrderModel>(m =>
                     m.WarehouseId == 1 ?
-                        (WarehouseSendActor.IResponse)new WarehouseSendActor.OrderIsSent { WarehouseId = m.WarehouseId } :
-                        (WarehouseSendActor.IResponse)new WarehouseSendActor.OrderIsNotSent { WarehouseId = m.WarehouseId });
+                        new WarehouseSendActor.OrderIsSent { WarehouseId = m.WarehouseId } :
+                        new WarehouseSendActor.OrderIsNotSent { WarehouseId = m.WarehouseId });
 
                 // Act
                 Subject.Tell(message);
@@ -176,7 +182,7 @@ namespace Avanti.OrderWarehouseServiceTests.WarehouseOrder
             public void Should_Return_Order_Processing_Failed_When_All_Warehouse_Orders_Are_Not_Sent()
             {
                 // Arrange
-                this.progWarehouseSendActor.SetResponseForRequest<Models.WarehouseOrder>(m =>
+                progWarehouseSendActor.SetResponseForRequest<Models.WarehouseOrderModel>(m =>
                     new WarehouseSendActor.OrderIsNotSent { WarehouseId = m.WarehouseId });
 
                 // Act
@@ -185,12 +191,6 @@ namespace Avanti.OrderWarehouseServiceTests.WarehouseOrder
                 // Assert
                 Kit.ExpectMsg<ProcessingCoordinatorActor.OrderFailedToProcess>();
             }
-
-            private ProcessingUnitActor.StartProcessing message = new ProcessingUnitActor.StartProcessing
-            {
-                OrderId = 5,
-                OrderDate = DateTimeOffset.Parse("2020-07-01T19:00:00Z", CultureInfo.InvariantCulture)
-            };
         }
     }
 }

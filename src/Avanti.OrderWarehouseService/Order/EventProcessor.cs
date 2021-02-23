@@ -6,7 +6,6 @@ using Avanti.Core.EventStream.Processor;
 using Avanti.Core.Microservice;
 using Avanti.Core.Microservice.Actors;
 using Avanti.OrderWarehouseService.Order.Events;
-using Microsoft.Extensions.Logging;
 
 namespace Avanti.OrderWarehouseService.Order
 {
@@ -23,12 +22,12 @@ namespace Avanti.OrderWarehouseService.Order
             this.mapper = mapper;
         }
 
-        public async override Task<Result> ProcessEvent(OrderInserted e, DateTimeOffset eventTimeStamp) =>
+        public override async Task<Result> ProcessEvent(OrderInserted e, DateTimeOffset eventTimeStamp) =>
             await this.processingCoordinatorActor.Ask(this.mapper.Map<ProcessingCoordinatorActor.ProcessOrder>(e)) switch
             {
-                ProcessingCoordinatorActor.OrderIsDuplicate _ => new Success(),
-                ProcessingCoordinatorActor.OrderIsProcessed _ => new Success(),
-                ProcessingCoordinatorActor.OrderIsPartiallyProcessed _ => new Success(),
+                ProcessingCoordinatorActor.OrderIsDuplicate => new Success(),
+                ProcessingCoordinatorActor.OrderIsProcessed => new Success(),
+                ProcessingCoordinatorActor.OrderIsPartiallyProcessed => new Success(),
                 ProcessingCoordinatorActor.OrderFailedToProcess f => $"Failed to process order {e.Id}".Failure(),
                 _ => $"Unknown error while processing order {e.Id}".Failure()
             };

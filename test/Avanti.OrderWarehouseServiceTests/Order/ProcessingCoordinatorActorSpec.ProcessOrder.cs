@@ -2,10 +2,7 @@ using System;
 using System.Globalization;
 using Akka.Actor;
 using Akka.TestKit;
-using AutoMapper;
-using Avanti.Core.Unittests;
 using Avanti.OrderWarehouseService.Order;
-using Avanti.OrderWarehouseService.Order.Mappings;
 using Avanti.OrderWarehouseService.WarehouseOrder;
 using FluentAssertions;
 using Xunit;
@@ -19,7 +16,7 @@ namespace Avanti.OrderWarehouseServiceTests.Order
             [Fact]
             public void Should_Return_Order_Is_Processed_When_Processing_Unit_Actor_Returns_Processed()
             {
-                this.progProcessingUnitActor.SetResponseForRequest<ProcessingUnitActor.StartProcessing>(
+                progProcessingUnitActor.SetResponseForRequest<ProcessingUnitActor.StartProcessing>(
                     r => new ProcessingCoordinatorActor.OrderIsProcessed());
 
                 Subject.Tell(
@@ -31,7 +28,7 @@ namespace Avanti.OrderWarehouseServiceTests.Order
 
                 Kit.ExpectMsg<ProcessingCoordinatorActor.OrderIsProcessed>();
 
-                this.progProcessingUnitActor.GetRequest<ProcessingUnitActor.StartProcessing>().Should().BeEquivalentTo(
+                progProcessingUnitActor.GetRequest<ProcessingUnitActor.StartProcessing>().Should().BeEquivalentTo(
                     new ProcessingUnitActor.StartProcessing
                     {
                         OrderId = 5,
@@ -42,7 +39,7 @@ namespace Avanti.OrderWarehouseServiceTests.Order
             [Fact]
             public void Should_Return_Order_Not_Processed_When_Processing_Unit_Actor_Returns_Not_Processed()
             {
-                this.progProcessingUnitActor.SetResponseForRequest<ProcessingUnitActor.StartProcessing>(
+                progProcessingUnitActor.SetResponseForRequest<ProcessingUnitActor.StartProcessing>(
                     r => new ProcessingCoordinatorActor.OrderFailedToProcess());
 
                 Subject.Tell(
@@ -58,7 +55,7 @@ namespace Avanti.OrderWarehouseServiceTests.Order
             [Fact]
             public void Should_Return_Order_Partially_Processed_When_Processing_Unit_Actor_Returns_Partially_Processed()
             {
-                this.progProcessingUnitActor.SetResponseForRequest<ProcessingUnitActor.StartProcessing>(
+                progProcessingUnitActor.SetResponseForRequest<ProcessingUnitActor.StartProcessing>(
                     r => new ProcessingCoordinatorActor.OrderIsPartiallyProcessed());
 
                 Subject.Tell(

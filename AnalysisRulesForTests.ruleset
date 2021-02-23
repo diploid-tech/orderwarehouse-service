@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<RuleSet Name="Rules for StyleCop.Analyzers" Description="Code analysis rules for Tests of Avanti Services" ToolsVersion="14.0">
-  <Include Path="AnalysisRules.ruleset" Action="Default" />
-  <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
-    <Rule Id="SA1400" Action="None" />
-    <Rule Id="SA1310" Action="None" />
-    <Rule Id="CA1707" Action="None" />
-  </Rules>
-</RuleSet>

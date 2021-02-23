@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Avanti.OrderWarehouseService.WarehouseOrder.Models
 {
-    public class WarehouseOrder
+    public class WarehouseOrderModel
     {
         public string? Id { get; set; }
         public int OrderId { get; set; }
