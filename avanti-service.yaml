@@ -21,8 +21,10 @@ main:
 environments:
   staging:
     replicaCount: 1
-    cpuLimit: 75m
-    memoryLimit: 128Mi
+    cpuRequest: 150m
+    cpuLimit: 500m
+    memoryRequest: 128Mi
+    memoryLimit: 160Mi
     vars:
       AkkaSettings__AkkaClusterDiscoveryResolver: Kubernetes
       AkkaSettings__MinNumberOfNodesInCluster: 1
