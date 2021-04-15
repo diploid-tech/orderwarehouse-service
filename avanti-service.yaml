@@ -11,6 +11,8 @@ main:
   httpPort: 5000
   clusterPort: 2552
   team: platform
+  metadataEndpoint: /private/metadata
+  eventMetadataEndpoint: /private/event/metadata
   authorization:
     requiredClaims:
       azp: applications
