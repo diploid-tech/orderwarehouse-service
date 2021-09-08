@@ -1,3 +1,4 @@
+definitionVersion: v1
 main:
   namespace: services
   name: orderwarehouse-service
@@ -22,7 +23,7 @@ main:
       x-avanti-email: email
 environments:
   staging:
-    replicaCount: 1
+    fixedReplicaCount: 1
     cpuRequest: 150m
     cpuLimit: 500m
     memoryRequest: 128Mi
