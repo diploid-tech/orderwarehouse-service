@@ -201,8 +201,10 @@ dotnet_naming_style.begins_with_i.word_separator =
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
 
 dotnet_analyzer_diagnostic.category-Style.severity = error
+dotnet_diagnostic.CA2254.severity = none
 dotnet_diagnostic.CA2234.severity = none
 dotnet_diagnostic.CA2007.severity = none
+dotnet_diagnostic.CA1848.severity = none
 dotnet_diagnostic.CA1816.severity = none
 dotnet_diagnostic.CA1711.severity = none
 dotnet_diagnostic.CA1716.severity = none

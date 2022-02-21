@@ -11,8 +11,9 @@ namespace Avanti.OrderWarehouseService.WarehouseOrder.Mappings
                 .ForMember(s => s.WarehouseId, o => o.MapFrom(s => s.Lines.Key))
                 .ForMember(s => s.Id, o => o.MapFrom(s => $"{s.Order.Id}-{s.Lines.Key}"))
                 .ForMember(s => s.Lines, o => o.MapFrom(s => s.Lines.AsEnumerable()))
-                .AfterMap((src, dest, context) => context.Mapper.Map(src.Order, dest))
-                .ForAllOtherMembers(o => o.Ignore());
+                .ForMember(s => s.OrderId, o => o.Ignore())
+                .ForMember(s => s.OrderDate, o => o.Ignore())
+                .AfterMap((src, dest, context) => context.Mapper.Map(src.Order, dest));
 
             CreateMap<Models.OrderModel, Models.WarehouseOrderModel>()
                 .ForMember(s => s.WarehouseId, o => o.Ignore())

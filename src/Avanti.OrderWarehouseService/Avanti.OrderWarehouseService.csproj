@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <DebugType>full</DebugType>
     <AssemblyName>Avanti.OrderWarehouseService</AssemblyName>
     <PackageId>ProcessingService</PackageId>
@@ -25,10 +25,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Avanti.Core.EventStream.Azure" Version="1.1.3-gfbc8785677" />
-    <PackageReference Include="Avanti.Core.KeyStore.Azure" Version="1.1.1-gb273be2f25" />
-    <PackageReference Include="Avanti.Core.Microservice" Version="1.6.3-gabda11822b" />
-    <PackageReference Include="Avanti.Core.RelationalData.PostgreSQL" Version="1.3.1-gc46e46d11a" />
-    <PackageReference Include="Avanti.Core.Http" Version="1.1.1-gea915ac170" />
+    <PackageReference Include="Avanti.Core.EventStream.Azure" Version="2.0.0-g849dd2ddc1" />
+    <PackageReference Include="Avanti.Core.KeyStore.Azure" Version="2.0.0-g4d00fab978" />
+    <PackageReference Include="Avanti.Core.Microservice" Version="2.0.0-gd3371d2970" />
+    <PackageReference Include="Avanti.Core.RelationalData.PostgreSQL" Version="2.0.0-g868de2da17" />
+    <PackageReference Include="Avanti.Core.Http" Version="2.0.0-g321f80d6ed" />
   </ItemGroup>
 </Project>
