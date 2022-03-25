@@ -8,7 +8,7 @@ main:
     Splits the order into seperate warehouse orders and sends them.
   integration: none
   deploymentType: Service
-  buildType: dotnet
+  buildType: dotnet6
   httpPort: 5000
   clusterPort: 2552
   team: platform
