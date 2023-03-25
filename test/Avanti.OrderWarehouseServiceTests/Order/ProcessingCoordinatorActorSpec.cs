@@ -6,42 +6,41 @@ using Avanti.OrderWarehouseService.Order;
 using Avanti.OrderWarehouseService.Order.Mappings;
 using Avanti.OrderWarehouseService.WarehouseOrder;
 
-namespace Avanti.OrderWarehouseServiceTests.Order
+namespace Avanti.OrderWarehouseServiceTests.Order;
+
+public partial class ProcessingCoordinatorActorSpec : WithSubject<IActorRef>
 {
-    public partial class ProcessingCoordinatorActorSpec : WithSubject<IActorRef>
+    private readonly ProgrammableActor<ProcessingUnitActor> progProcessingUnitActor;
+
+    private ProcessingCoordinatorActorSpec()
     {
-        private readonly ProgrammableActor<ProcessingUnitActor> progProcessingUnitActor;
+        progProcessingUnitActor = Kit.CreateProgrammableActor<ProcessingUnitActor>("processing-unit-actor");
 
-        private ProcessingCoordinatorActorSpec()
+        var config = new MapperConfiguration(cfg => cfg.AddProfile(new OrderMapping()));
+        config.AssertConfigurationIsValid();
+
+        Subject = ActorOfAsTestActorRef<ActorUnderTest>(
+            Props.Create<ActorUnderTest>(config.CreateMapper(), progProcessingUnitActor.TestProbe));
+    }
+
+    public class ActorUnderTest : ProcessingCoordinatorActor
+    {
+        private readonly TestProbe processingUnitTestProbe;
+
+        public ActorUnderTest(IMapper mapper, TestProbe processingUnitTestProbe)
+            : base(mapper)
         {
-            progProcessingUnitActor = Kit.CreateProgrammableActor<ProcessingUnitActor>("processing-unit-actor");
-
-            var config = new MapperConfiguration(cfg => cfg.AddProfile(new OrderMapping()));
-            config.AssertConfigurationIsValid();
-
-            Subject = ActorOfAsTestActorRef<ActorUnderTest>(
-                Props.Create<ActorUnderTest>(config.CreateMapper(), progProcessingUnitActor.TestProbe));
+            this.processingUnitTestProbe = processingUnitTestProbe;
         }
 
-        public class ActorUnderTest : ProcessingCoordinatorActor
+        public bool HasExistingOrder { get; set; }
+
+        protected override bool ChildExists(string actorName) => HasExistingOrder;
+
+        protected override IActorRef CreateProcessingUnitActor(string actorName) => processingUnitTestProbe;
+
+        protected override void PreStart()
         {
-            private readonly TestProbe processingUnitTestProbe;
-
-            public ActorUnderTest(IMapper mapper, TestProbe processingUnitTestProbe)
-                : base(mapper)
-            {
-                this.processingUnitTestProbe = processingUnitTestProbe;
-            }
-
-            public bool HasExistingOrder { get; set; }
-
-            protected override bool ChildExists(string actorName) => HasExistingOrder;
-
-            protected override IActorRef CreateProcessingUnitActor(string actorName) => processingUnitTestProbe;
-
-            protected override void PreStart()
-            {
-            }
         }
     }
 }

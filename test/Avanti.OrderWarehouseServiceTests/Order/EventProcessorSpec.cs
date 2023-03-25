@@ -11,87 +11,86 @@ using FluentAssertions;
 using NSubstitute;
 using Xunit;
 
-namespace Avanti.OrderWarehouseServiceTests.Order
+namespace Avanti.OrderWarehouseServiceTests.Order;
+
+public class EventProcessorSpec : WithSubject<EventProcessor>
 {
-    public class EventProcessorSpec : WithSubject<EventProcessor>
+    private readonly ProgrammableActor<ProcessingCoordinatorActor> progProcessingCoordinatorActor;
+
+    private readonly OrderInserted insertedEvent = new()
     {
-        private readonly ProgrammableActor<ProcessingCoordinatorActor> progProcessingCoordinatorActor;
+        Id = 5,
+        OrderDate = DateTimeOffset.Parse("2020-07-01T19:00:00Z", CultureInfo.InvariantCulture)
+    };
 
-        private readonly OrderInserted insertedEvent = new()
-        {
-            Id = 5,
-            OrderDate = DateTimeOffset.Parse("2020-07-01T19:00:00Z", CultureInfo.InvariantCulture)
-        };
+    public EventProcessorSpec()
+    {
+        progProcessingCoordinatorActor = Kit.CreateProgrammableActor<ProcessingCoordinatorActor>("processing-coordinator-actor");
+        IActorProvider<ProcessingCoordinatorActor> processingCoordinatorActorProvider = An<IActorProvider<ProcessingCoordinatorActor>>();
+        processingCoordinatorActorProvider.Get().Returns(progProcessingCoordinatorActor.TestProbe);
 
-        public EventProcessorSpec()
-        {
-            progProcessingCoordinatorActor = Kit.CreateProgrammableActor<ProcessingCoordinatorActor>("processing-coordinator-actor");
-            IActorProvider<ProcessingCoordinatorActor> processingCoordinatorActorProvider = An<IActorProvider<ProcessingCoordinatorActor>>();
-            processingCoordinatorActorProvider.Get().Returns(progProcessingCoordinatorActor.TestProbe);
+        var config = new MapperConfiguration(cfg => cfg.AddProfile(new OrderMapping()));
+        config.AssertConfigurationIsValid();
 
-            var config = new MapperConfiguration(cfg => cfg.AddProfile(new OrderMapping()));
-            config.AssertConfigurationIsValid();
+        Subject = new EventProcessor(processingCoordinatorActorProvider, config.CreateMapper());
+    }
 
-            Subject = new EventProcessor(processingCoordinatorActorProvider, config.CreateMapper());
-        }
+    [Fact]
+    public async void Should_Return_Success_When_Processed()
+    {
+        progProcessingCoordinatorActor.SetResponseForRequest<ProcessingCoordinatorActor.ProcessOrder>(
+            r => new ProcessingCoordinatorActor.OrderIsProcessed());
 
-        [Fact]
-        public async void Should_Return_Success_When_Processed()
-        {
-            progProcessingCoordinatorActor.SetResponseForRequest<ProcessingCoordinatorActor.ProcessOrder>(
-                r => new ProcessingCoordinatorActor.OrderIsProcessed());
+        Result result = await Subject.ProcessEvent(
+            insertedEvent,
+            DateTimeOffset.Parse("2020-12-31T07:00:00Z", CultureInfo.InvariantCulture));
 
-            Result result = await Subject.ProcessEvent(
-                insertedEvent,
-                DateTimeOffset.Parse("2020-12-31T07:00:00Z", CultureInfo.InvariantCulture));
+        result.Should().BeOfType<Success>();
 
-            result.Should().BeOfType<Success>();
+        progProcessingCoordinatorActor.GetRequest<ProcessingCoordinatorActor.ProcessOrder>().Should().BeEquivalentTo(
+            new ProcessingCoordinatorActor.ProcessOrder
+            {
+                OrderId = 5,
+                OrderDate = DateTimeOffset.Parse("2020-07-01T19:00:00Z", CultureInfo.InvariantCulture)
+            });
+    }
 
-            progProcessingCoordinatorActor.GetRequest<ProcessingCoordinatorActor.ProcessOrder>().Should().BeEquivalentTo(
-                new ProcessingCoordinatorActor.ProcessOrder
-                {
-                    OrderId = 5,
-                    OrderDate = DateTimeOffset.Parse("2020-07-01T19:00:00Z", CultureInfo.InvariantCulture)
-                });
-        }
+    [Fact]
+    public async void Should_Return_Success_When_Duplicate_Order()
+    {
+        progProcessingCoordinatorActor.SetResponseForRequest<ProcessingCoordinatorActor.ProcessOrder>(
+            r => new ProcessingCoordinatorActor.OrderIsDuplicate());
 
-        [Fact]
-        public async void Should_Return_Success_When_Duplicate_Order()
-        {
-            progProcessingCoordinatorActor.SetResponseForRequest<ProcessingCoordinatorActor.ProcessOrder>(
-                r => new ProcessingCoordinatorActor.OrderIsDuplicate());
+        Result result = await Subject.ProcessEvent(
+            insertedEvent,
+            DateTimeOffset.Parse("2020-12-31T07:00:00Z", CultureInfo.InvariantCulture));
 
-            Result result = await Subject.ProcessEvent(
-                insertedEvent,
-                DateTimeOffset.Parse("2020-12-31T07:00:00Z", CultureInfo.InvariantCulture));
+        result.Should().BeOfType<Success>();
+    }
 
-            result.Should().BeOfType<Success>();
-        }
+    [Fact]
+    public async void Should_Return_Success_When_Partially_Processed()
+    {
+        progProcessingCoordinatorActor.SetResponseForRequest<ProcessingCoordinatorActor.ProcessOrder>(
+            r => new ProcessingCoordinatorActor.OrderIsPartiallyProcessed());
 
-        [Fact]
-        public async void Should_Return_Success_When_Partially_Processed()
-        {
-            progProcessingCoordinatorActor.SetResponseForRequest<ProcessingCoordinatorActor.ProcessOrder>(
-                r => new ProcessingCoordinatorActor.OrderIsPartiallyProcessed());
+        Result result = await Subject.ProcessEvent(
+            insertedEvent,
+            DateTimeOffset.Parse("2020-12-31T07:00:00Z", CultureInfo.InvariantCulture));
 
-            Result result = await Subject.ProcessEvent(
-                insertedEvent,
-                DateTimeOffset.Parse("2020-12-31T07:00:00Z", CultureInfo.InvariantCulture));
+        result.Should().BeOfType<Success>();
+    }
 
-            result.Should().BeOfType<Success>();
-        }
+    [Fact]
+    public async void Should_Return_Failure_When_Failed_To_Process()
+    {
+        progProcessingCoordinatorActor.SetResponseForRequest<ProcessingCoordinatorActor.ProcessOrder>(
+            r => new ProcessingCoordinatorActor.OrderFailedToProcess());
 
-        [Fact]
-        public async void Should_Return_Failure_When_Failed_To_Process()
-        {
-            progProcessingCoordinatorActor.SetResponseForRequest<ProcessingCoordinatorActor.ProcessOrder>(
-                r => new ProcessingCoordinatorActor.OrderFailedToProcess());
+        Result result = await Subject.ProcessEvent(
+            insertedEvent,
+            DateTimeOffset.Parse("2020-12-31T07:00:00Z", CultureInfo.InvariantCulture));
 
-            Result result = await Subject.ProcessEvent(
-                insertedEvent,
-                DateTimeOffset.Parse("2020-12-31T07:00:00Z", CultureInfo.InvariantCulture));
-
-            result.Should().BeOfType<Failure>();
-        }
+        result.Should().BeOfType<Failure>();
     }
 }

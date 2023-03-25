@@ -1,14 +1,12 @@
-using Akka.Actor;
 using Avanti.Core.Microservice.Actors;
-using Avanti.Core.Microservice.AkkaSupport;
+using Avanti.Core.Microservice.Extensions;
 
-namespace Avanti.OrderWarehouseService.Order
+namespace Avanti.OrderWarehouseService.Order;
+
+public class ProcessingCoordinatorActorProvider : BaseActorProvider<ProcessingCoordinatorActor>
 {
-    public class ProcessingCoordinatorActorProvider : BaseActorProvider<ProcessingCoordinatorActor>
+    public ProcessingCoordinatorActorProvider(ActorSystem actorSystem)
     {
-        public ProcessingCoordinatorActorProvider(ActorSystem actorSystem)
-        {
-            this.ActorRef = actorSystem.ActorOfWithDI<ProcessingCoordinatorActor>("processing-coordinator-actor");
-        }
+        this.ActorRef = actorSystem.ActorOfWithDI<ProcessingCoordinatorActor>("processing-coordinator-actor");
     }
 }

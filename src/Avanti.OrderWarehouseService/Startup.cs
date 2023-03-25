@@ -1,14 +1,17 @@
 using System.CodeDom.Compiler;
-using Avanti.Core.Microservice;
-using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Authorization;
 
-namespace Avanti.OrderWarehouseService
+namespace Avanti.OrderWarehouseService;
+
+[GeneratedCode("avanti-cli", "1.7.0-beta+35a2c2c9e6")]
+public class ExtendedConfiguration : IExtendedConfiguration
 {
-    [GeneratedCode("avanti-cli", "2020-R1")]
-    public class Startup : StartupCore<ServiceSettings>
-    {
-        public Startup(IConfiguration config)
-            : base(config)
-        { }
-    }
+    public void AdditionalAuthorizationSetup(AuthorizationOptions options)
+    { }
+
+    public void AdditionalConfigure(WebApplication app)
+    { }
+
+    public void AdditionalServices(IServiceCollection services)
+    { }
 }

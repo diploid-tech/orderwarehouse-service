@@ -1,13 +1,10 @@
-using System;
+namespace Avanti.OrderWarehouseService.WarehouseOrder;
 
-namespace Avanti.OrderWarehouseService.WarehouseOrder
+public partial class ProcessingUnitActor
 {
-    public partial class ProcessingUnitActor
+    public class StartProcessing
     {
-        public class StartProcessing
-        {
-            public int OrderId { get; set; }
-            public DateTimeOffset OrderDate { get; set; }
-        }
+        public int OrderId { get; set; }
+        public DateTimeOffset OrderDate { get; set; }
     }
 }
